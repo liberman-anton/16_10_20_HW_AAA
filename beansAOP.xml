@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+   http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+   http://www.springframework.org/schema/aop
+   http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	
+    <bean id = "authAspect" class = "tel_ran.security.aop.Authorizer">
+        <constructor-arg name = "rulesMethods">
+	        <map>
+	           <entry key="admin">
+	               <set>
+	                   <value>set1</value>
+	                   <value>set2</value>
+	                   <value>get1</value>
+	               </set>
+	           </entry>
+	           <entry key="user">
+	               <set>
+	                   <value>get1</value>
+	               </set>
+	           </entry>
+	        </map>
+	    </constructor-arg>
+	    <constructor-arg name = "auth" ref="authenticater"/>
+	    <constructor-arg name = "acc" ref="accounter"/>
+    </bean>
+    <bean name="authenticater" class = "tel_ran.security.Authenticater">
+        <constructor-arg name = "rulesPasswords">
+            <map>
+                <entry key="admin" value="12345"/>
+                <entry key="user" value="123"/>
+            </map>
+        </constructor-arg>
+    </bean>
+    
+     <bean name="accounter" class = "tel_ran.security.Accounter" 
+        init-method="restoreMap" destroy-method="saveUpdatedMap">
+        <constructor-arg name="fileName" value="statistics.txt"/>
+    </bean>
+    
+    <bean name = "appl_class" class = "tel_ran.application.AplicationClass">
+    	<constructor-arg name="auth">
+    	    <ref bean = "authenticater"/>
+    	</constructor-arg>
+    </bean>
+    
+	<aop:aspectj-autoproxy/>
+	<aop:config>
+		<aop:aspect ref="authAspect">
+			<aop:pointcut expression="execution(public * tel_ran.application.AplicationClass.*(..)) 
+			    and not execution(public * tel_ran.application.AplicationClass.log*(..))" id="allFunctions" />
+			<aop:around method="authorize" pointcut-ref="allFunctions" />
+		</aop:aspect>
+	</aop:config>
+	
+</beans>
