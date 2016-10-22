@@ -1,38 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
    http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
    http://www.springframework.org/schema/aop
-   http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+   http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+   http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-4.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          ">
 	
     <bean id = "authAspect" class = "tel_ran.security.aop.Authorizer">
-        <constructor-arg name = "rulesMethods">
-	        <map>
-	           <entry key="admin">
-	               <set>
-	                   <value>set1</value>
-	                   <value>set2</value>
-	                   <value>get1</value>
-	               </set>
-	           </entry>
-	           <entry key="user">
-	               <set>
-	                   <value>get1</value>
-	               </set>
-	           </entry>
-	        </map>
-	    </constructor-arg>
 	    <constructor-arg name = "auth" ref="authenticater"/>
 	    <constructor-arg name = "acc" ref="accounter"/>
     </bean>
     <bean name="authenticater" class = "tel_ran.security.Authenticater">
-        <constructor-arg name = "rulesPasswords">
-            <map>
-                <entry key="admin" value="12345"/>
-                <entry key="user" value="123"/>
-            </map>
-        </constructor-arg>
+        
     </bean>
     
      <bean name="accounter" class = "tel_ran.security.Accounter" 
@@ -40,7 +27,7 @@
         <constructor-arg name="fileName" value="statistics.txt"/>
     </bean>
     
-    <bean name = "appl_class" class = "tel_ran.application.AplicationClass">
+    <bean name = "appl_class" class = "tel_ran.application.AplicationClass" scope="prototype">
     	<constructor-arg name="auth">
     	    <ref bean = "authenticater"/>
     	</constructor-arg>
@@ -54,5 +41,22 @@
 			<aop:around method="authorize" pointcut-ref="allFunctions" />
 		</aop:aspect>
 	</aop:config>
+	
+	<!-- Configure the Mongo Server -->
+	<bean id="uri" class="com.mongodb.MongoClientURI">
+		<constructor-arg name="uri"
+			value="mongodb://root:12345@ds053166.mlab.com:53166/bsh_persons" />
+	</bean>
+	<bean id="mongo" class="com.mongodb.MongoClient">
+		<constructor-arg name="uri" ref="uri" />
+	</bean>
+	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+		<constructor-arg ref="mongo" />
+		<constructor-arg name="databaseName" value="bsh_persons" />
+	</bean>
+	<bean class="tel_ran.persons.model.dao.AccountsMongoDB"></bean>
+
+	<mongo:repositories base-package="tel_ran.security.dao.repo"></mongo:repositories>
+	<context:annotation-config />
 	
 </beans>

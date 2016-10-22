@@ -16,7 +16,6 @@ public class TestAuth {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		ctx = new FileSystemXmlApplicationContext("beansAOP.xml");
-		apCl = (AplicationClass)ctx.getBean("appl_class");
 	}
 
 	@AfterClass
@@ -26,20 +25,41 @@ public class TestAuth {
 
 	@Test
 	public void testAdmin() {
+		boolean flag = true;
+		apCl = (AplicationClass)ctx.getBean("appl_class");
 		apCl.login("admin", "12345");
-		apCl.get1();
-		apCl.set1();
-		apCl.set2();
+		try {
+			apCl.get1();
+			apCl.set1();
+			apCl.set2();
+		} catch (Exception e) {
+			flag = false;
+		}
+		assertTrue(flag);
 		System.out.println();
 	}
 	
 	@Test
 	public void testUser() {
+		apCl = (AplicationClass)ctx.getBean("appl_class");
 		String message = null;
 		apCl.login("user", "123");
-		apCl.get1();
+		boolean flag = true;
+		try {
+			apCl.get1();
+		} catch (Exception e1) {
+			flag = false;
+		}
+		assertTrue(flag);
 		try {
 			apCl.set1();
+		} catch (SecurityException e) {
+			message = e.getMessage();
+			System.out.println(e.getMessage());
+		}
+		assertEquals("403", message);
+		try {
+			apCl.set2();
 		} catch (SecurityException e) {
 			message = e.getMessage();
 			System.out.println(e.getMessage());
@@ -48,12 +68,27 @@ public class TestAuth {
 		System.out.println();
 	}
 	
-//	@Test
+	@Test
 	public void testBoss() {
+		apCl = (AplicationClass)ctx.getBean("appl_class");
 		String message = null;
-		apCl.login("boss", "777");
+		apCl.login("admin", "777");
+		try {
+			apCl.get1();
+		} catch (SecurityException e) {
+			message = e.getMessage();
+			System.out.println(e.getMessage());
+		}
+		assertEquals("401", message);
 		try {
 			apCl.set1();
+		} catch (SecurityException e) {
+			message = e.getMessage();
+			System.out.println(e.getMessage());
+		}
+		assertEquals("401", message);
+		try {
+			apCl.set2();
 		} catch (SecurityException e) {
 			message = e.getMessage();
 			System.out.println(e.getMessage());
